@@ -8,14 +8,14 @@ import os
 import sys
 import time
 import unicodedata
-import dotenv
+# import dotenv
 from dropbox_content_hasher import DropboxContentHasher
 
 if sys.version.startswith('2'):
     sys.exit("ERROR: Python2 detected. Please use with Python3")
 
 import dropbox
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 load_dotenv()
 
 
