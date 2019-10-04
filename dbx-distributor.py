@@ -5,7 +5,6 @@ This app uses Dropbox API v2.
 
 import datetime
 import os
-# import six
 import sys
 import time
 import unicodedata
@@ -26,11 +25,6 @@ def main():
     TOKEN = os.getenv("TOKEN")
     folder = os.getenv("folder")
     rootdir = os.getenv("rootdir")
-    # rootdir = os.path.expanduser(os.getenv("rootdir"))
-    # for root, dirs, files in os.walk(rootdir):
-    #     for name in files: 
-    #         fullname = os.path.join(root, name)
-    #         print(fullname)
 
     print('Dropbox subfolder name:', folder)
     print('Local directory:', rootdir)
@@ -45,14 +39,14 @@ def main():
     listing = list_folder(dbx, folder, "")
     video_files = os.listdir(rootdir)
 
-    for name in video_files:
+    for name in video_files: # Check for files that have been removed from DB
         if name not in listing:
             fullname = os.path.join(rootdir, name)
             print("Whomp whomp! {0} does not exist in cloud".format(name))
             print("Deleting file now")
             os.remove(fullname)
 
-    for dbx_file in listing:
+    for dbx_file in listing: # Download new and updated files from DB
         found = False
         if dbx_file in video_files:
             fullname = os.path.join(rootdir, dbx_file)
@@ -79,14 +73,10 @@ def main():
             fullname = os.path.join(rootdir, dbx_file)
             print(fullname)
             print(dbx_file, 'does not exist, downloading')
-            # open(fullname, 'a').close()
             res = download(dbx, folder, "", dbx_file)
             with open(fullname, 'wb') as f:
                 data = f.write(res)
-                f.close()
-            # os.utime(fullname, (int(md.client_modified.strftime('%Y%m%d')), int(md.client_modified.strftime('%Y%m%d'))))
-            
-    sys.exit()
+                f.close()            
 
 def list_folder(dbx, folder, subfolder):
     """List a folder.
