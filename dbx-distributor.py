@@ -15,7 +15,7 @@ if sys.version.startswith('2'):
     sys.exit("ERROR: Python2 detected. Please use with Python3")
 
 import dropbox
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 load_dotenv()
 
 
@@ -26,6 +26,8 @@ def main():
     folder = os.getenv("folder")
     rootdir = os.getenv("rootdir")
 
+    if TOKEN == None or len(TOKEN) == 0:
+        sys.exit("ERROR: no token defined in .env")
     print('Dropbox subfolder name:', folder)
     print('Local directory:', rootdir)
     if not os.path.exists(rootdir):
