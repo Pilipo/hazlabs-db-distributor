@@ -32,7 +32,7 @@ def main():
     #         fullname = os.path.join(root, name)
     #         print(fullname)
 
-    print('Dropbox folder name:', folder)
+    print('Dropbox subfolder name:', folder)
     print('Local directory:', rootdir)
     if not os.path.exists(rootdir):
         print(rootdir, 'does not exist on your filesystem')
@@ -45,18 +45,23 @@ def main():
     listing = list_folder(dbx, folder, "")
     video_files = os.listdir(rootdir)
 
+    for name in video_files:
+        if name not in listing:
+            fullname = os.path.join(rootdir, name)
+            print("Whomp whomp! {0} does not exist in cloud".format(name))
+            print("Deleting file now")
+            os.remove(fullname)
+
     for dbx_file in listing:
         found = False
-        print('hunting for ', dbx_file)
         if dbx_file in video_files:
-            # print('Found file and need to test if it needs updating')
             fullname = os.path.join(rootdir, dbx_file)
             md = listing[dbx_file]
             mtime = os.path.getmtime(fullname)
             mtime_dt = datetime.datetime(*time.gmtime(mtime)[:6])
             size = os.path.getsize(fullname)
             if check_hash(fullname) == md.content_hash:
-                print(dbx_file, 'is already synced [stats match]')
+                print('Sync Status: {1:<20} Already Synced: {0}'.format(dbx_file, "[stats matched]"))
             else:
                 print(dbx_file, 'exists with different stats, downloading')
                 res = download(dbx, folder, "", dbx_file)
@@ -82,70 +87,6 @@ def main():
             # os.utime(fullname, (int(md.client_modified.strftime('%Y%m%d')), int(md.client_modified.strftime('%Y%m%d'))))
             
     sys.exit()
-    
-
-    if args.mode == "up":
-        for root, dirs, files in os.walk(rootdir):
-            subfolder = ""
-            # subfolder = root[len(rootdir):].strip(os.path.sep)
-            listing = list_folder(dbx, folder, subfolder)
-            print('Descending into', subfolder, '...')
-
-            for name in files: 
-                fullname = os.path.join(root, name)
-
-            continue
-
-            # First do all the files.
-            for name in files:
-                fullname = os.path.join(root, name)
-                # if not isinstance(name, six.text_type):
-                #     name = name.decode('utf-8')
-                nname = unicodedata.normalize('NFC', name)
-                if name.startswith('.'):
-                    print('Skipping dot file:', name)
-                elif name.startswith('@') or name.endswith('~'):
-                    print('Skipping temporary file:', name)
-                elif name.endswith('.pyc') or name.endswith('.pyo'):
-                    print('Skipping generated file:', name)
-                elif nname in listing:
-                    md = listing[nname]
-                    mtime = os.path.getmtime(fullname)
-                    mtime_dt = datetime.datetime(*time.gmtime(mtime)[:6])
-                    size = os.path.getsize(fullname)
-                    if (isinstance(md, dropbox.files.FileMetadata) and
-                            mtime_dt == md.client_modified and size == md.size):
-                        print(name, 'is already synced [stats match]')
-                    else:
-                        print(name, 'exists with different stats, downloading')
-                        res = download(dbx, folder, subfolder, name)
-                        with open(fullname) as f:
-                            data = f.read()
-                        if res == data:
-                            print(name, 'is already synced [content match]')
-                        else:
-                            print(name, 'has changed since last sync')
-                            upload(dbx, fullname, folder, subfolder, name, overwrite=True)
-                else:
-                    upload(dbx, fullname, folder, subfolder, name)
-
-            # Then choose which subdirectories to traverse.
-            keep = []
-            for name in dirs:
-                if name.startswith('.'):
-                    print('Skipping dot directory:', name)
-                elif name.startswith('@') or name.endswith('~'):
-                    print('Skipping temporary directory:', name)
-                elif name == '__pycache__':
-                    print('Skipping generated directory:', name)
-                elif yesno('Descend into %s' % name, True, args):
-                    print('Keeping directory:', name)
-                    keep.append(name)
-                else:
-                    print('OK, skipping directory:', name)
-            dirs[:] = keep
-    else:
-        listing = list_folder(dbx, folder, "")
 
 def list_folder(dbx, folder, subfolder):
     """List a folder.
